@@ -1,0 +1,109 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+.special-gothic-expanded-one-regular {
+    font-family: "Special Gothic Expanded One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+header {
+    background-color: brown;
+    text-align: center;
+    border-bottom: 2px solid #ccc;
+}
+  
+body {
+    background-color: bisque;
+    color: #333;
+    font-family: "Special Gothic Expanded One", sans-serif;
+}
+
+h1 {
+    padding: 20px;
+    text-align: center;
+    font-size: 2.5em;
+    color: brown;
+}
+p {
+    padding: 20px;
+    text-align: center;
+    font-size: 1.2em;
+    color: #220808;
+}
+
+.image-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.cover-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 0 10px 8px rgba(0, 0, 0, 0.2);
+    object-fit: contain;
+}
+
+
+
+#message {
+    text-align: center;
+    margin: 20px;
+    min-height: 25px;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+.search-container input[type="text"] {
+    width: 300px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 1em;
+}
+.search-container input[type="text"]:hover {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+    transform: scale(1.05);
+    transition: background-color 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    cursor: none;
+}
+.search-container button {
+    padding: 10px 20px;
+    margin-left: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 2em;
+}
+.search-container button:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+    transition: background-color 0.3s, transform 0.3s;
+    cursor: none;
+}
+
+footer {
+    text-align: center;
+    color: #333;
+    font-size: 0.8em;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+footer p {
+    font-weight: initial;
+    margin: 0;
+}
