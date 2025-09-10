@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Special Gothic Expanded One', cursive;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-secondary-50 to-primary-50 min-h-screen;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-600 hover:bg-secondary-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg border border-gray-100 p-6;
+  }
+  
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  /* EXTREME pixelation effect - completely unrecognizable */
+  .pixelated-1 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(60px) contrast(2000%) saturate(2000%) brightness(0.01) hue-rotate(180deg) sepia(100%) invert(100%) grayscale(100%);
+    transform: scale(1) rotate(45deg);
+    opacity: 0.05;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .pixelated-2 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(50px) contrast(1500%) saturate(1500%) brightness(0.02) hue-rotate(160deg) sepia(95%) invert(95%) grayscale(95%);
+    transform: scale(1) rotate(40deg);
+    opacity: 0.08;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .pixelated-3 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(40px) contrast(1000%) saturate(1000%) brightness(0.03) hue-rotate(140deg) sepia(90%) invert(90%) grayscale(90%);
+    transform: scale(1) rotate(35deg);
+    opacity: 0.12;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .pixelated-4 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(30px) contrast(600%) saturate(600%) brightness(0.05) hue-rotate(120deg) sepia(80%) invert(80%) grayscale(80%);
+    transform: scale(1) rotate(30deg);
+    opacity: 0.18;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .pixelated-5 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(25px) contrast(400%) saturate(400%) brightness(0.08) hue-rotate(100deg) sepia(70%) invert(70%) grayscale(70%);
+    transform: scale(1) rotate(25deg);
+    opacity: 0.25;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .pixelated-6 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(20px) contrast(250%) saturate(250%) brightness(0.12) hue-rotate(80deg) sepia(60%) invert(60%) grayscale(60%);
+    transform: scale(1) rotate(20deg);
+    opacity: 0.35;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .pixelated-7 {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: blur(15px) contrast(150%) saturate(150%) brightness(0.2) hue-rotate(60deg) sepia(50%) invert(50%) grayscale(50%);
+    transform: scale(1) rotate(15deg);
+    opacity: 0.5;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  /* Additional extreme pixelation techniques */
+  .pixelated-1::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,0.8) 2px,
+        rgba(0,0,0,0.8) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,0.8) 2px,
+        rgba(0,0,0,0.8) 4px
+      );
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .pixelated-2::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 3px,
+        rgba(0,0,0,0.6) 3px,
+        rgba(0,0,0,0.6) 6px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 3px,
+        rgba(0,0,0,0.6) 3px,
+        rgba(0,0,0,0.6) 6px
+      );
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .pixelated-3::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 4px,
+        rgba(0,0,0,0.4) 4px,
+        rgba(0,0,0,0.4) 8px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 4px,
+        rgba(0,0,0,0.4) 4px,
+        rgba(0,0,0,0.4) 8px
+      );
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}

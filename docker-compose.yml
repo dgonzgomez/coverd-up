@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: coverdup
+      POSTGRES_USER: coverdup
+      POSTGRES_PASSWORD: coverdup_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coverdup"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://coverdup:coverdup_password@postgres:5432/coverdup?schema=public"
+      JWT_SECRET: "your-super-secret-jwt-key-here"
+      JWT_EXPIRES_IN: "7d"
+      PORT: 3001
+      NODE_ENV: "production"
+      FRONTEND_URL: "http://localhost:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: "http://localhost:3001/api"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+
+

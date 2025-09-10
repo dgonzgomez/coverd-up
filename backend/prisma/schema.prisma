@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  games     Game[]
+  guesses   Guess[]
+
+  @@map("users")
+}
+
+model Album {
+  id          String   @id @default(uuid())
+  title       String
+  artist      String
+  coverUrl    String
+  spotifyId   String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  games       Game[]
+
+  @@map("albums")
+}
+
+model Game {
+  id          String   @id @default(uuid())
+  userId      String
+  albumId     String
+  isCompleted Boolean  @default(false)
+  isWon       Boolean  @default(false)
+  guessesLeft Int      @default(5)
+  pixelation  Int      @default(7)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  album       Album    @relation(fields: [albumId], references: [id])
+  guesses     Guess[]
+
+  @@unique([userId, createdAt])
+  @@map("games")
+}
+
+model Guess {
+  id        String   @id @default(uuid())
+  gameId    String
+  userId    String
+  guess     String
+  isCorrect Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("guesses")
+}
