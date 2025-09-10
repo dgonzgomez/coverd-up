@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverd Up</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <img src="logo.svg" alt="Coverd Up Logo" class="logo" width="200">
+    </header>   
+    <main>
+        <div class="image-container">
+            <img src="" alt="Album Cover" id="albumCover" class="cover-image pixelated">
+            <div class="loading-spinner" id="spinner"></div>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Guess...">
+            <button id="searchButton" aria-label="Submit Guess">
+                <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <polyline fill="none" points="8.5 5 15.5 12 8.5 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polyline>
+                </svg>
+            </button>
+            <div class="dropdown" id="dropdown"></div>
+        </div>
+        <div id="message" class="message"></div>
+    </main>
+    <script src="script.js"></script>
+    <footer>
+        <p>&copy; 2025 Coverd Up. All rights reserved.</p>
+    </footer>
+</body>
+</html>
