@@ -13,6 +13,7 @@ interface SpotifyAlbum {
     id: string
     name: string
   }>
+  album_type?: string
   images: Array<{
     url: string
     height: number
@@ -55,9 +56,11 @@ class SpotifyService {
 
     try {
       const { clientId, clientSecret } = this.getCredentials()
+      if (!clientId || !clientSecret) throw new Error('Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET in backend/.env')
       const response = await axios.post('https://accounts.spotify.com/api/token', 
         'grant_type=client_credentials',
         {
+          timeout: 10000,
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
@@ -67,11 +70,11 @@ class SpotifyService {
 
       const data: SpotifyTokenResponse = response.data
       this.accessToken = data.access_token
-      this.tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000 // 1 minute buffer
+      this.tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000
 
       return this.accessToken
     } catch (error) {
-      console.error('Error getting Spotify access token:', error)
+      console.error('Spotify token request failed:', axios.isAxiosError(error) ? error.response?.status || error.code : 'unknown')
       throw new Error('Failed to get Spotify access token')
     }
   }
@@ -86,8 +89,9 @@ class SpotifyService {
           params: {
             q: query,
             type: 'album',
-            limit
+            limit: Math.max(1, Math.min(10, limit))
           },
+          timeout: 10000,
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -96,221 +100,41 @@ class SpotifyService {
 
       return response.data.albums.items
     } catch (error) {
-      console.error('Error searching Spotify albums:', error)
-      throw new Error('Failed to search albums on Spotify')
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined
+      console.error('Spotify search failed:', status || 'connection error')
+      if (status === 403) throw new Error('Spotify accepts the credentials but denies catalog access (403). Check this app’s access in the Spotify Developer Dashboard.')
+      if (status === 429) throw new Error('Spotify is receiving too many requests. Please wait a moment and retry.')
+      throw new Error('Could not search Spotify. Check the connection and server credentials.')
     }
   }
 
-  async getRandomAlbums(limit: number = 20): Promise<SpotifyAlbum[]> {
-    try {
-      const token = await this.getAccessToken()
-      
-      // Get popular albums by searching for well-known artists and popular terms
-      const popularArtists = [
-        'The Beatles', 'Pink Floyd', 'Led Zeppelin', 'Queen', 'The Rolling Stones',
-        'AC/DC', 'Nirvana', 'Radiohead', 'U2', 'Coldplay', 'Adele', 'Taylor Swift',
-        'Drake', 'Kanye West', 'Eminem', 'Jay-Z', 'Kendrick Lamar', 'Billie Eilish',
-        'Ed Sheeran', 'Bruno Mars', 'Ariana Grande', 'Justin Bieber', 'Rihanna',
-        'Beyoncé', 'Lady Gaga', 'Katy Perry', 'Miley Cyrus', 'Selena Gomez',
-        'Michael Jackson', 'Prince', 'David Bowie', 'Elton John', 'Bob Dylan',
-        'The Beach Boys', 'Fleetwood Mac', 'Eagles', 'Aerosmith', 'Guns N\' Roses',
-        'Metallica', 'Red Hot Chili Peppers', 'Pearl Jam', 'Foo Fighters', 'Green Day'
-      ];
-      
-      const popularGenres = [
-        'rock', 'pop', 'hip-hop', 'electronic', 'jazz', 'classical', 'country',
-        'blues', 'folk', 'reggae', 'r&b', 'soul', 'funk', 'disco', 'punk'
-      ];
-      
-      // Create search queries for popular content
-      const searchQueries = [
-        // Popular artists
-        ...popularArtists.slice(0, 15).map(artist => `artist:"${artist}"`),
-        // Popular genres with recent years
-        ...popularGenres.slice(0, 8).map(genre => `genre:"${genre}" year:2015-2024`),
-        // Popular albums by decade
-        'album:year:2020-2024', // Recent popular albums
-        'album:year:2015-2019', // Popular albums from recent years
-        'album:year:2010-2014', // Popular albums from mid-2010s
-        'album:year:2005-2009', // Popular albums from late 2000s
-        'album:year:2000-2004', // Popular albums from early 2000s
-        'album:year:1995-1999', // Popular albums from late 90s
-        'album:year:1990-1994', // Popular albums from early 90s
-        'album:year:1985-1989', // Popular albums from late 80s
-        'album:year:1980-1984', // Popular albums from early 80s
-        'album:year:1975-1979', // Popular albums from late 70s
-        'album:year:1970-1974', // Popular albums from early 70s
-        'album:year:1965-1969', // Popular albums from late 60s
-        'album:year:1960-1964', // Popular albums from early 60s
-      ];
-      
-      // Pick a random search query
-      const randomQuery = searchQueries[Math.floor(Math.random() * searchQueries.length)]
-      
-      const response = await axios.get<SpotifySearchResponse>(
-        'https://api.spotify.com/v1/search',
-        {
-          params: {
-            q: randomQuery,
-            type: 'album',
-            limit: Math.min(limit, 50) // Spotify API limit
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
+  private albumCache = new Map<string, { expires: number; albums: SpotifyAlbum[] }>()
 
-      return response.data.albums.items
-    } catch (error) {
-      console.error('Error getting popular albums from Spotify:', error)
-      throw new Error('Failed to get popular albums from Spotify')
-    }
-  }
-
-  async getAlbumById(id: string): Promise<SpotifyAlbum> {
-    try {
-      const token = await this.getAccessToken()
-      
-      const response = await axios.get<SpotifyAlbum>(
-        `https://api.spotify.com/v1/albums/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
-
-      return response.data
-    } catch (error) {
-      console.error('Error getting album by ID from Spotify:', error)
-      throw new Error('Failed to get album from Spotify')
-    }
-  }
-
-  // Get albums that would likely be on Billboard Top 200 charts
-  async getTopAlbums(limit: number = 20): Promise<SpotifyAlbum[]> {
-    try {
-      const token = await this.getAccessToken()
-      
-      // Focus on Billboard-chart-worthy albums by searching for the most popular artists
-      const billboardArtists = [
-        // Current Billboard chart-toppers
-        'Taylor Swift', 'Drake', 'Bad Bunny', 'The Weeknd', 'Ariana Grande',
-        'Billie Eilish', 'Olivia Rodrigo', 'Dua Lipa', 'Ed Sheeran', 'Bruno Mars',
-        'Post Malone', 'Travis Scott', 'Kendrick Lamar', 'SZA', 'Doja Cat',
-        'Lil Nas X', 'Megan Thee Stallion', 'Cardi B', 'Nicki Minaj', 'Lizzo',
-        'Harry Styles', 'Adele', 'Beyoncé', 'Rihanna', 'Justin Bieber',
-        'BTS', 'Blackpink', 'Coldplay', 'Imagine Dragons', 'Maroon 5',
-        'Luke Combs', 'Morgan Wallen', 'Zach Bryan', 'Jason Aldean', 'Kane Brown',
-        'Future', 'Lil Baby', 'Gunna', '21 Savage', 'Lil Durk',
-        'The Kid LAROI', 'Jack Harlow', 'Lil Tjay', 'Polo G', 'Lil Uzi Vert'
-      ];
-      
-      // Search for albums by these artists (most likely to be on Billboard charts)
-      const searchQueries = billboardArtists.map(artist => `artist:"${artist}"`);
-      
-      // Pick a random artist to search for
-      const randomQuery = searchQueries[Math.floor(Math.random() * searchQueries.length)]
-      
-      const response = await axios.get<SpotifySearchResponse>(
-        'https://api.spotify.com/v1/search',
-        {
-          params: {
-            q: randomQuery,
-            type: 'album',
-            limit: Math.min(limit, 50)
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
-
-      return response.data.albums.items
-    } catch (error) {
-      console.error('Error getting Billboard-style albums from Spotify:', error)
-      throw new Error('Failed to get Billboard-style albums from Spotify')
-    }
-  }
-
-  // Get albums from Spotify's New Releases (most current)
-  async getNewReleases(limit: number = 20): Promise<SpotifyAlbum[]> {
-    try {
-      const token = await this.getAccessToken()
-      
-      const response = await axios.get<{albums: {items: SpotifyAlbum[]}}>(
-        'https://api.spotify.com/v1/browse/new-releases',
-        {
-          params: {
-            limit: Math.min(limit, 50)
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
-
-      return response.data.albums.items
-    } catch (error) {
-      console.error('Error getting new releases from Spotify:', error)
-      throw new Error('Failed to get new releases from Spotify')
-    }
-  }
-
-  // Get albums from Spotify's Featured Playlists (often contains Billboard hits)
-  async getFeaturedPlaylistAlbums(limit: number = 20): Promise<SpotifyAlbum[]> {
-    try {
-      const token = await this.getAccessToken()
-      
-      // Get featured playlists first
-      const playlistsResponse = await axios.get<{playlists: {items: Array<{id: string, name: string}>}}>(
-        'https://api.spotify.com/v1/browse/featured-playlists',
-        {
-          params: {
-            limit: 20
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
-
-      const playlists = playlistsResponse.data.playlists.items;
-      if (playlists.length === 0) {
-        return [];
+  async getGameAlbums(favoritesOnly = false): Promise<SpotifyAlbum[]> {
+    const favorites = ['Jane Remover', 'underscores', 'Charli xcx', 'Ninajirachi', 'SOPHIE', 'Magdalena Bay', 'Caroline Polachek', 'A. G. Cook']
+    const popular = ['Billie Eilish', 'SZA', 'Kendrick Lamar', 'The Weeknd', 'Olivia Rodrigo', 'Frank Ocean', 'Tyler, The Creator', 'Bad Bunny', 'Taylor Swift', 'Dua Lipa']
+    const artists = favoritesOnly || Math.random() < 0.75 ? favorites : popular
+    const shuffled = [...artists].sort(() => Math.random() - 0.5)
+    for (const artist of shuffled.slice(0, 3)) {
+      const cached = this.albumCache.get(artist)
+      if (cached && cached.expires > Date.now()) return cached.albums
+      const results = await this.searchAlbums(`artist:"${artist}"`, 10)
+      const seen = new Set<string>()
+      const albums = results.filter(album => {
+        const title = album.name.toLowerCase().replace(/\s*[([][^)\]]*[)\]]/g, '').trim()
+        if (album.album_type !== 'album' || !album.images.length ||
+            !album.artists.some(a => a.name.toLowerCase() === artist.toLowerCase()) || seen.has(title)) return false
+        seen.add(title)
+        return true
+      })
+      if (albums.length) {
+        this.albumCache.set(artist, { expires: Date.now() + 3600000, albums })
+        return albums
       }
-
-      // Pick a random featured playlist
-      const randomPlaylist = playlists[Math.floor(Math.random() * playlists.length)];
-      
-      // Get tracks from that playlist
-      const tracksResponse = await axios.get<{items: Array<{track: {album: SpotifyAlbum}}>}>(
-        `https://api.spotify.com/v1/playlists/${randomPlaylist.id}/tracks`,
-        {
-          params: {
-            limit: Math.min(limit, 50)
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
-
-      // Extract albums from tracks
-      const albums = tracksResponse.data.items
-        .map(item => item.track?.album)
-        .filter(album => album) // Remove null/undefined albums
-        .slice(0, limit);
-
-      return albums as SpotifyAlbum[];
-    } catch (error) {
-      console.error('Error getting featured playlist albums from Spotify:', error)
-      throw new Error('Failed to get featured playlist albums from Spotify')
     }
+    return []
   }
 
-  // Convert Spotify album to our format
   convertSpotifyAlbum(spotifyAlbum: SpotifyAlbum) {
     return {
       id: spotifyAlbum.id,
@@ -324,4 +148,3 @@ class SpotifyService {
 }
 
 export const spotifyService = new SpotifyService()
-export default spotifyService

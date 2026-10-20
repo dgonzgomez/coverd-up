@@ -1,85 +1,33 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import { spotifyService } from './services/spotify'
+import { parseAlbumQuery } from './services/search-query'
 
-// Import routes
-import authRoutes from './routes/auth';
-import gameRoutes from './routes/game';
-import albumRoutes from './routes/album';
-import spotifyRoutes from './routes/spotify';
-
-// Load environment variables
-dotenv.config();
-
-const app = express();
-const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
-
-// Security middleware
-app.use(helmet());
-
-// CORS configuration
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
-});
-app.use(limiter);
-
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/game', gameRoutes);
-app.use('/api/albums', albumRoutes);
-app.use('/api/spotify', spotifyRoutes);
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('Shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-  console.log('Shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-});
-
-export default app;
+dotenv.config()
+const app = express()
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }))
+app.use(express.json())
+app.get('/health', (_req, res) => res.json({ status: 'OK' }))
+app.get('/api/spotify/random', async (req, res) => {
+  try {
+    const albums = await spotifyService.getGameAlbums(req.query.mix === 'favorites')
+    if (!albums.length) return res.status(404).json({ message: 'No albums found. Try another record.' })
+    const eligible = albums.filter(a => a.id !== req.query.exclude)
+    const pool = eligible.length ? eligible : albums
+    res.json({ album: spotifyService.convertSpotifyAlbum(pool[Math.floor(Math.random() * pool.length)]) })
+  } catch (error) {
+    res.status(503).json({ message: error instanceof Error ? error.message : 'Could not reach Spotify. Try again.' })
+  }
+})
+app.get('/api/spotify/suggestions', async (req, res) => {
+  const query = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 150) : ''
+  if (query.length < 2) return res.json({ suggestions: [] })
+  try {
+    const albums = await spotifyService.searchAlbums(parseAlbumQuery(query), 8)
+    res.json({ suggestions: albums.map(a => spotifyService.convertSpotifyAlbum(a)) })
+  } catch {
+    res.status(503).json({ message: 'Spotify search is unavailable. You can still type an album title.' })
+  }
+})
+app.listen(process.env.PORT || 3001, () => console.log('CoverdUp API ready on port ' + (process.env.PORT || 3001)))
